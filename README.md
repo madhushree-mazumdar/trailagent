@@ -13,3 +13,5 @@ Usage
 2. Run the app:
 
    streamlit run streamlit_app.py
+
+<img src="trailagent_workflow_dag.png" width="1603" height="488">
