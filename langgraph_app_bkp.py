@@ -14,7 +14,7 @@ import os
 
 # Set up NVIDIA API key (ensure this is set securely in production)
 if not os.environ.get("NVIDIA_API_KEY"):
-    os.environ["NVIDIA_API_KEY"] = "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"
+    os.environ["NVIDIA_API_KEY"] = ""
 
 # Chat model
 chat_model = ChatNVIDIA(model="meta/llama-3.1-70b-instruct")
@@ -28,7 +28,7 @@ def get_vectorstore_retriever():
         collection_name="nps",
         embedding=embeddings_model,
         url="https://e08da72a-93d5-4d9b-9ba9-b49759659b78.us-west-2-0.aws.cloud.qdrant.io:6333",
-        api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.CTEbTLFOZ0QJRgzJw6kT3Msf03p4TAsm2qb60zw5T4I",
+        api_key="",
         vector_name="nps-dense"
     )
     return vector_store.as_retriever()
