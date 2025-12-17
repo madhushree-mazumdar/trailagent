@@ -1,0 +1,8 @@
+streamlit>=1.0
+pandas
+numpy
+langchain-core 
+langgraph>0.2.27
+langchain_community 
+langchain-qdrant
+langchain-nvidia-ai-endpoints
