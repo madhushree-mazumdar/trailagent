@@ -17,7 +17,7 @@ import os
 
 # Set up NVIDIA API key (ensure this is set securely in production)
 if not os.environ.get("NVIDIA_API_KEY"):
-    os.environ["NVIDIA_API_KEY"] = ""
+    os.environ["NVIDIA_API_KEY"] = "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"
 
 # Chat model
 chat_model = ChatNVIDIA(model="meta/llama-3.1-70b-instruct")
@@ -34,7 +34,7 @@ def get_vectorstore_retriever():
         collection_name="nps",
         embedding=embeddings_model,
         url="https://e08da72a-93d5-4d9b-9ba9-b49759659b78.us-west-2-0.aws.cloud.qdrant.io:6333",
-        api_key="",
+        api_key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.YTnvpCTAvZrM7lW-dOvvFq54IWyFW2bpi-RVmKP2Nak",
         vector_name="nps-dense"
     )
     return vector_store.as_retriever()
@@ -53,7 +53,6 @@ class GraphState(TypedDict):
     documents: List[Document]
     safety_flag: str
 
-# Example: LangGraph application class (stub)
 class TrailAgentLangGraph:
     def __init__(self):
         self.chat_model = chat_model
@@ -65,6 +64,7 @@ class TrailAgentLangGraph:
         # It returns a response like "safe" or "unsafe" with a violation category.
         message = [HumanMessage(content= conversation_messages[-1].content)]
         response = llm_client.invoke(message)
+        print(response.content)
         return response
 
     # 1. Input Gate Node
@@ -113,7 +113,7 @@ class TrailAgentLangGraph:
         print("---RETRIEVING DOCUMENTS---")
         question = state["messages"][-1].content
         documents = self.retriever.invoke(question)
-        print(documents)
+        #print(documents)
         return {"documents": documents}
 
     def generate(self, state):
@@ -121,7 +121,7 @@ class TrailAgentLangGraph:
         print("---GENERATING ANSWER---")
         question = state["messages"][-1].content
         documents = state["documents"]
-        print(documents)
+        #print(documents)
 
         # Prompt for RAG
         prompt = ChatPromptTemplate.from_template(
@@ -134,9 +134,6 @@ class TrailAgentLangGraph:
             ────────────────────────────
             Answer only the specific question asked.
             Do not add additional facts, tips, or suggestions unless the user explicitly asks for them.
-            Use only information available in the vector database context.
-            If retrieved context is empty or does not contain the answer AND SAFETY_EXCEPTION = FALSE, respond with:
-            “I don’t know based on my available information.”
             Do not generate or infer facts that are not grounded in the retrieved documents.
             No assumptions.
             No external knowledge.
@@ -157,17 +154,6 @@ class TrailAgentLangGraph:
             ────────────────────────────
             Only discuss California National Parks.
             If context shows information from multiple parks, remain park-specific and avoid mixing details unless the user explicitly asks for comparisons.
-
-            ────────────────────────────
-            RESPONSE RULES
-            ────────────────────────────
-            If SAFETY_EXCEPTION = TRUE:
-            → Provide a short, safe, authoritative response as per SAFETY EXCEPTION RESPONSE.
-            If SAFETY_EXCEPTION = FALSE and answer is available in RAG context:
-            → Provide a short, direct answer grounded in the retrieved text.
-            If SAFETY_EXCEPTION = FALSE and answer is NOT available in RAG context:
-            → Respond exactly with:
-            “I don’t know based on my available information.”
 
             Context: {context}
             Question: {question}
