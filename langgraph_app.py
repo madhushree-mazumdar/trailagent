@@ -80,8 +80,11 @@ class TrailAgentLangGraph:
         lines = response.content.strip().split("\n")
         status = lines[0].lower() # 'safe' or 'unsafe'
         print("Guardrail response: ", status)
-        return {"status": status, "category": lines[1].lower()}
-
+        if status == 'unsafe':
+            output = {"status": status, "category": lines[1].lower()}
+        else:
+            output = {"status": status, "category": ""}
+        return output
     # 1. Input Gate Node
     def check_input_safety(self, state: GraphState) -> dict:
         # Check the latest message (which is the user's input at the start)
@@ -202,8 +205,7 @@ class TrailAgentLangGraph:
             }
         )
 
-        # --- RAG and Output Gate Logic ---
-        # RAG always proceeds to the output check
+        workflow.add_edge("retrieve", "generate")
         workflow.add_edge("generate", "output_guard")
 
         # After output_guard, check the flag and route
@@ -216,8 +218,6 @@ class TrailAgentLangGraph:
             }
         )
 
-        workflow.add_edge("retrieve", "generate")
-        workflow.add_edge("generate", "output_guard")
         workflow.add_edge("halt_process", END)
         workflow.set_entry_point("input_guard")
 
