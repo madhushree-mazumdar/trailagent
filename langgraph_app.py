@@ -52,27 +52,42 @@ class GraphState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
     documents: List[Document]
     safety_flag: str
+    unsafe_category: str
 
 class TrailAgentLangGraph:
     def __init__(self):
         self.chat_model = chat_model
         self.embeddings_model = embeddings_model
         self.retriever = get_vectorstore_retriever()
+        self.categories = {
+            "s1": "Violent Crimes",
+            "s2": "Non-Violent Crimes",
+            "s3": "Sex Crimes",
+            "s4": "Child Exploitation",
+            "s5": "Defamation",
+            "s6": "Specialized Advice",
+            "s7": "Privacy",
+            "s10": "Hate Speech",
+            "s11": "Suicide/Self-Harm",
+            "s13": "Elections"
+        }
     
     def check_safety(self, llm_client, conversation_messages):
         # Llama Guard usually works by assessing the turn-by-turn conversation history.
         # It returns a response like "safe" or "unsafe" with a violation category.
         message = [HumanMessage(content= conversation_messages[-1].content)]
         response = llm_client.invoke(message)
-        print(response.content)
-        return response
+        lines = response.content.strip().split("\n")
+        status = lines[0].lower() # 'safe' or 'unsafe'
+        print("Guardrail response: ", status)
+        return {"status": status, "category": lines[1].lower()}
 
     # 1. Input Gate Node
     def check_input_safety(self, state: GraphState) -> dict:
         # Check the latest message (which is the user's input at the start)
         safety_result = self.check_safety(llama_guard_model, state["messages"])
-        if safety_result == "UNSAFE":
-            return {"safety_flag": "UNSAFE_INPUT"}
+        if safety_result["status"] == "unsafe":
+            return {"safety_flag": "UNSAFE_INPUT", "unsafe_category": safety_result["category"]}
         return {"safety_flag": "SAFE"}
 
 
@@ -80,8 +95,8 @@ class TrailAgentLangGraph:
     def check_output_safety(self, state: GraphState) -> dict:
         # Check the latest message (which is the AI's response)
         safety_result = self.check_safety(llama_guard_model, state["messages"])
-        if safety_result == "UNSAFE":
-            return {"safety_flag": "UNSAFE_OUTPUT"}
+        if safety_result["status"] == "unsafe":
+            return {"safety_flag": "UNSAFE_OUTPUT", "unsafe_category": safety_result["category"]}
         # If the output is safe, the process is complete
         return {"safety_flag": "SAFE"}
 
@@ -103,9 +118,9 @@ class TrailAgentLangGraph:
 
     def halt_process(self, state: GraphState) -> dict:
         if state["safety_flag"] == "UNSAFE_INPUT":
-            msg = "I cannot process that request due to safety policy violations."
+            msg = "I cannot process that request due to safety policy violations: " + self.categories[state["unsafe_category"]]
         else: # UNSAFE_OUTPUT
-            msg = "The generated response was flagged as potentially unsafe and has been blocked."
+            msg = "The generated response was flagged as potentially unsafe and has been blocked: " + self.categories[state["unsafe_category"]]
         return {"messages": [AIMessage(content=msg)]}
 
     def retrieve(self, state):
@@ -148,12 +163,6 @@ class TrailAgentLangGraph:
             ────────────────────────────
             If the context does not mention a trail, wildlife species, date, rule, or any fact → do NOT invent it.
             Do not reference real-time conditions such as weather, closures, or crowd levels.
-
-            ────────────────────────────
-            SCOPE LIMITATION
-            ────────────────────────────
-            Only discuss California National Parks.
-            If context shows information from multiple parks, remain park-specific and avoid mixing details unless the user explicitly asks for comparisons.
 
             Context: {context}
             Question: {question}
