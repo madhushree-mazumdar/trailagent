@@ -9,6 +9,15 @@ import time
 
 st.set_page_config(page_title="TrailAgent", layout="wide")
 
+# Add a Home tab at the top of the page with a grey background
+st.markdown("""
+<nav style="background: #708090; padding: 0.5rem 0 0.5rem 1rem; border-radius: 0 0 12px 12px; margin-bottom: 16px;">
+  <a href="/" style="font-weight: bold; color: #F5F5F5; text-decoration: none; font-size: 1.1rem;">🏠 Home</a>
+  <a href="/" style="font-weight: bold; color: #F5F5F5; text-decoration: none; font-size: 1.1rem;"> | </a>
+  <a href="/" style="font-weight: bold; color: #F5F5F5; text-decoration: none; font-size: 1.1rem;">Future Enhancement</a>
+</nav>
+""", unsafe_allow_html=True)
+
 # Header with full-width background image
 header_image_url = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80"
 
